@@ -45,17 +45,6 @@ doap:maintainer [
 
 rdfs:comment """
 
-The logic of the plugin is as follows:
-
-when a single output mode is selected:
-    - if only 1 jack is present -> patch single in to single out
-    - if 2 jacks are present -> sum these too a single output
-
-when the stereo output mode is selected:
-    - if only 1 jack is present -> pass signal on to both outputs
-    - if 2 jacks are present -> just be a stereo passthrough
-
-TBD: summing channels results in more volume (+6dB when equal), do we want to compensate for this?
 
 """;
 
@@ -90,24 +79,32 @@ lv2:port
 ]
 ,
 [
-    a lv2:InputPort, lv2:ControlPort;
+    a lv2:AudioPort, lv2:OutputPort;
     lv2:index 4;
-    lv2:symbol "OutputPort";
-    lv2:name "Output";
+    lv2:symbol "OutMono";
+    lv2:name "Out Mono";
+    lv2:shortname "Mono";
+]
+,
+[
+    a lv2:InputPort, lv2:ControlPort;
+    lv2:index 5;
+    lv2:symbol "summedGain";
+    lv2:name "Summed Gain";
     lv2:portProperty lv2:enumeration , lv2:integer ;
-    lv2:default 0 ;
+    lv2:default 0.5 ;
     lv2:minimum 0 ;
-    lv2:maximum 6 ;
+    lv2:maximum 1 ;
     lv2:scalePoint
     [
-        rdfs:label "Output 1" ;
-        rdf:value 0 
+        rdfs:label "0.0dB" ;
+        rdf:value 1
     ] , [
-        rdfs:label "Output 2" ;
-        rdf:value 1 
+        rdfs:label "-3.0dB" ;
+        rdf:value 0.75
     ], [
-        rdfs:label "Stereo" ;
-        rdf:value 2 
+        rdfs:label "-6.0dB" ;
+        rdf:value 0.5
     ]
 ]
 .
