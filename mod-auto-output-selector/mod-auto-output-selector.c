@@ -29,10 +29,11 @@
 // These hardcoded paths are very, very dirty
 // not only will this plugin ONLY work on the Dwarf, it might even be HW rev. dependant
 // although as of writing (2022) this is not the case
-#define GPIO_INP_JACK_1_NUM     "77"
-#define GPIO_INP_JACK_2_NUM     "64"
-#define GPIO_OUTP_JACK_1_NUM    "63"
-#define GPIO_OUTP_JACK_2_NUM    "62"
+// THESE NUMBERS ARE SWAPPED AS MOD-UI SWAPS THE I/O NUMBERS TOO!!
+#define GPIO_INP_JACK_2_NUM     "77"
+#define GPIO_INP_JACK_1_NUM     "64"
+#define GPIO_OUTP_JACK_2_NUM    "63"
+#define GPIO_OUTP_JACK_1_NUM    "62"
 
 #define JACK_GPIO_PATH          "/sys/class/gpio/gpio"
 #define JACK_GPIO_VALUE_FILE    "/value"
@@ -47,8 +48,7 @@ typedef enum {
 	In1    = 0,
     In2,
     Out1,
-    Out2,
-    InputPort
+    Out2
 } PortIndex;
 
 typedef enum {
@@ -107,8 +107,6 @@ typedef struct {
     float* in2;
     float* out1;
     float* out2;
-    
-    float* port;
 
     int outp_jack_1_value;
     int outp_jack_2_value;
@@ -230,9 +228,6 @@ connect_port(LV2_Handle instance,
     case Out2:
         self->out2 = (float*)data;
         break;
-    case InputPort:
-        self->port = (float*)data;
-        break;
 	}
 }
 
@@ -303,88 +298,22 @@ run(LV2_Handle instance, uint32_t n_samples)
 {
     Plugin* self = (Plugin*) instance;
 
-    int patch_state = 0;
-    switch((int)*self->port)
-    {
-        case INP_1:
-            if (self->stereo_jack_plugged == 1)
-                patch_state = I1_O12;
-            else if (self->outp_jack_1_value == 1)
-                patch_state = I1_O1;
-            else if (self->outp_jack_2_value == 1)
-                patch_state = I1_O2;
-        break;
-
-        case INP_2:
-            if (self->stereo_jack_plugged == 1)
-                patch_state = I2_O12;
-            else if (self->outp_jack_1_value == 1)
-                patch_state = I2_O1;
-            else if (self->outp_jack_2_value == 1)
-                patch_state = I2_O2;
-        break;
-
-        case INP_12:
-            if (self->stereo_jack_plugged == 1)
-                patch_state = I12_O12;
-            else if (self->outp_jack_1_value == 1)
-                patch_state = I12_O1;
-            else if (self->outp_jack_2_value == 1)
-                patch_state = I12_O2;
-        break;
-    }
-
-    if ((self->outp_jack_1_value != 1) && (self->outp_jack_2_value != 1))
-        patch_state = NO_JACKS;
-
-
     for ( uint32_t i = 0; i < n_samples; i++)
     {
-        switch(patch_state)
-        {
-            case (I1_O1):
-                self->out1[i] = self->in1[i];
-                self->out2[i] = 0.f;
-            break;
-            case (I1_O2):
-                self->out1[i] = 0.f;
-                self->out2[i] = self->in1[i];
-            break;
-            case (I1_O12):
-                self->out1[i] = self->in1[i];
-                self->out2[i] = self->in1[i];
-            break;
+        if (self->stereo_jack_plugged) {
+            self->out1[i] = self->in1[i];
+            self->out2[i] = self->in2[i];
+        }
+        else if (self->outp_jack_1_value) {
+            self->out1[i] = (self->in1[i] + self->in2[i]) * 0.5;
+            self->out2[i] = 0.f;;
+        }
+        else if (self->outp_jack_2_value) {
+            self->out1[i] = 0.f;
+            self->out2[i] = (self->in1[i] + self->in2[i]) * 0.5;
+        }
+        else {
 
-            case (I2_O1):
-                self->out1[i] = self->in2[i];
-                self->out2[i] = 0.f;
-            break;
-            case (I2_O2):
-                self->out1[i] = 0.f;
-                self->out2[i] = self->in2[i];
-            break;
-            case (I2_O12):
-                self->out1[i] = self->in2[i];
-                self->out2[i] = self->in2[i];
-            break;
-
-            case (I12_O1):
-                self->out1[i] = self->in1[i] + self->in2[i];
-                self->out2[i] = 0.f;
-            break;
-            case (I12_O2):
-                self->out1[i] = 0.f;
-                self->out2[i] = self->in1[i] + self->in2[i];
-            break;
-            case (I12_O12):
-                self->out1[i] = self->in1[i];
-                self->out2[i] = self->in2[i];
-            break;
-
-            case NO_JACKS:
-                self->out1[i] = 0.f;
-                self->out2[i] = 0.f;
-            break;
         }
 
         if (self->refresh_counter > 0) {
