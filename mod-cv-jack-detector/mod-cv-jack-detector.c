@@ -29,10 +29,11 @@
 // These hardcoded paths are very, very dirty
 // not only will this plugin ONLY work on the Dwarf, it might even be HW rev. dependant
 // although as of writing (2022) this is not the case
-#define GPIO_INP_JACK_1_NUM     "77"
-#define GPIO_INP_JACK_2_NUM     "64"
-#define GPIO_OUTP_JACK_1_NUM    "63"
-#define GPIO_OUTP_JACK_2_NUM    "62"
+// THESE NUMBERS ARE SWAPPED AS MOD-UI SWAPS THE I/O NUMBERS TOO!!
+#define GPIO_INP_JACK_2_NUM     "77"
+#define GPIO_INP_JACK_1_NUM     "64"
+#define GPIO_OUTP_JACK_2_NUM    "63"
+#define GPIO_OUTP_JACK_1_NUM    "62"
 
 #define JACK_GPIO_PATH          "/sys/class/gpio/gpio"
 #define JACK_GPIO_VALUE_FILE    "/value"
